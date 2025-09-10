@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="he">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>תפריט פיצה - הזמנה ותשלום</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;direction:rtl;padding:16px;background:#fff;color:#111}
+    .card{max-width:720px;margin:0 auto;border:1px solid #e6e6e6;padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.03)}
+    h1{margin:0 0 8px;font-size:1.4rem}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    label{display:block;margin-bottom:6px}
+    .item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #eee}
+    .toppings{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+    .topping{padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.95rem}
+    .total{font-weight:700;font-size:1.2rem;margin-top:12px}
+    button{padding:10px 14px;border-radius:8px;border:0;font-weight:700;cursor:pointer}
+    .pay{background:#28a745;color:white}
+    .note{font-size:0.85rem;color:#666;margin-top:8px}
+    input[type="number"]{width:80px;padding:6px;border-radius:6px;border:1px solid #ccc}
+    @media(max-width:420px){.row{flex-direction:column;align-items:stretch} input[type="number"]{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🍕 תפריט פיצה — הזמנה מהירה</h1>
+    <p class="note">בחרו פיצה, תוספות וכתובת. לחצו על "חשב ותשלום" כדי לראות את הסכום ואז המשך לתשלום.</p>
+
+    <div class="item">
+      <div>
+        <div><strong>פיצה אישית</strong></div>
+        <div class="note">קוטר 26 סמ</div>
+      </div>
+      <div>₪<span id="price-personal">30</span></div>
+      <input type="radio" name="size" value="30" id="size-personal" checked />
+    </div>
+
+    <div class="item">
+      <div>
+        <div><strong>פיצה משפחתית</strong></div>
+        <div class="note">קוטר 32 סמ</div>
+      </div>
+      <div>₪<span id="price-family">55</span></div>
+      <input type="radio" name="size" value="55" id="size-family" />
+    </div>
+
+    <div class="item">
+      <div>
+        <div><strong>פיצה ענקית</strong></div>
+        <div class="note">קוטר 40 סמ</div>
+      </div>
+      <div>₪<span id="price-large">75</span></div>
+      <input type="radio" name="size" value="75" id="size-large" />
+    </div>
+
+    <div style="margin-top:12px">
+      <label>תוספות (₪5 כל אחת):</label>
+      <div class="toppings">
+        <label class="topping"><input type="checkbox" class="topping-checkbox" value="5" /> זיתים</label>
+        <label class="topping"><input type="checkbox" class="topping-checkbox" value="5" /> פטריות</label>
+        <label class="topping"><input type="checkbox" class="topping-checkbox" value="5" /> בצל</label>
+        <label class="topping"><input type="checkbox" class="topping-checkbox" value="5" /> תירס</label>
+        <label class="topping"><input type="checkbox" class="topping-checkbox" value="5" /> גבינה נוספת</label>
+        <label class="topping"><input type="checkbox" class="topping-checkbox" value="5" /> פפרוני</label>
+      </div>
+    </div>
+
+    <div style="margin-top:12px" class="row">
+      <div style="flex:1">
+        <label for="address">כתובת למשלוח</label>
+        <input id="address" type="text" placeholder="רחוב, מספר, עיר" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc"/>
+      </div>
+      <div>
+        <label for="delivery">דמי משלוח</label>
+        <input id="delivery" type="number" value="15" min="0" />
+      </div>
+    </div>
+
+    <div class="total">סה״כ: ₪<span id="total">0</span></div>
+
+    <div style="margin-top:10px" class="row">
+      <button id="calc" aria-label="חשב סכום">חשב ותשלום</button>
+      <button id="pay" class="pay" style="display:none" aria-label="עבור לתשלום">עבור לתשלום</button>
+    </div>
+
+    <p class="note">כפתור התשלום מוביל לקישור סליקה חיצוני — החליפו את משתנה <code>paymentLink</code> ב-JS בקישור שלכם (PayPal.me / Bit / Paybox וכו').</p>
+  </div>
+
+  <script>
+    // מחירים נשמרים כמחרוזות במסמך אך נתונים לחישוב כמספרים
+    function parsePrice(v){ return Number(v) || 0; }
+
+    function calcTotal(){
+      // גודל
+      const sizeRadio = document.querySelector('input[name="size"]:checked');
+      const sizePrice = parsePrice(sizeRadio ? sizeRadio.value : 0);
+
+      // תוספות
+      const toppings = Array.from(document.querySelectorAll('.topping-checkbox:checked'));
+      const toppingsTotal = toppings.reduce((s,el)=> s + parsePrice(el.value), 0);
+
+      // משלוח
+      const delivery = parsePrice(document.getElementById('delivery').value);
+
+      // סכום כולל
+      const total = sizePrice + toppingsTotal + delivery;
+
+      // עדכון תצוגה
+      document.getElementById('total').textContent = total.toFixed(2).replace('.00','');
+
+      return total;
+    }
+
+    document.getElementById('calc').addEventListener('click', function(){
+      const total = calcTotal();
+
+      // בדיקה בסיסית: כתובת
+      const address = document.getElementById('address').value.trim();
+      if(!address){
+        if(!confirm('לא הוזנה כתובת משלוח. להמשיך ללא כתובת?')) return;
+      }
+
+      // הצג כפתור תשלום עם הסכום
+      const payBtn = document.getElementById('pay');
+      payBtn.style.display = 'inline-block';
+      payBtn.textContent = 'עבור לתשלום (₪' + (Math.round(total*100)/100) + ')';
+
+      // שמירת פרטי ההזמנה בנתונים לשימוש לאחר התשלום (ניתן לשנות)
+      payBtn.dataset.order = JSON.stringify({
+        size: document.querySelector('input[name="size"]:checked').id,
+        toppings: Array.from(document.querySelectorAll('.topping-checkbox:checked')).map(n=>n.parentElement.textContent.trim()),
+        address: address,
+        total: total
+      });
+    });
+
+    // החליפו את הקישור כאן בקישור הסליקה שלכם.
+    // אפשר להשתמש ב-PayPal.me: https://www.paypal.me/USERNAME/AMOUNT
+    // או בקישור Bit/Paybox של העסק שלכם.
+    const paymentLinkTemplate = "https://www.paypal.com/paypalme/YOURNAME/"; // החליפו YOURNAME
+
+    document.getElementById('pay').addEventListener('click', function(){
+      const data = this.dataset.order ? JSON.parse(this.dataset.order) : null;
+      const amount = data ? (Math.round(data.total*100)/100) : calcTotal();
+      // בניית קישור — עבור PayPal.me מוסיפים את הסכום בסוף הנתיב
+      // תחליפו את הלוגיקה כאן אם אתם שולחים ל-Bit/Paybox/API אחר.
+      const link = paymentLinkTemplate + encodeURIComponent(amount);
+      // פתיחת הקישור בחלון/לשונית חדשה
+      window.open(link, '_blank');
+      // אפשר גם להעתיק פרטי הזמנה ללוח — שימושי לשליחת אישור
+      const summary = data ? ("פיצה: " + data.size + "\nתוספות: " + (data.toppings.join(', ') || 'ללא') + "\nכתובת: " + (data.address || 'לא הוזנה') + "\nסכום: ₪" + amount) : '';
+      // הצעת העתק
+      if(summary && confirm('ההזמנה נפתחה בעמוד התשלום. להעתיק פרטי הזמנה כדי לשלוח ללקוח?')) {
+        navigator.clipboard.writeText(summary).then(()=> alert('פרטי ההזמנה הועתקו ללוח.'), ()=> alert('לא ניתן להעתיק אוטומטית — העתיקו ידנית:\n' + summary));
+      }
+    });
+
+    // חשב סה"כ כברירת מחדל בתחילת הטעינה
+    calcTotal();
+  </script>
+</body>
+</html>
